@@ -1,0 +1,27 @@
+[package]
+name = "service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# use DB library in Service
+db = { path = "../db" }
+
+# Logger for concurrent tasks/requests (pretty, local)
+tracing-forest = { workspace = true } # workspace = true meaning get versions from ROOT cargo.toml
+# Loggers for Handlers; JSON output in the cloud
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde_json = { workspace = true }
+serde = { workspace = true }
+# convenient Error enums
+thiserror = { workspace = true }
+
+# hyper crates
+http-body-util = "0.1.2"
+hyper = { version = "1.3.1", features = ["full"] }
+hyper-util = { version = "0.1.5", features = ["full"] }
+tokio = { version = "1.38.0", features = ["full"] }
+
+# others
+dotenvy = "0.15.7"

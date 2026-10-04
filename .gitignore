@@ -1,0 +1,7 @@
+/target
+
+# local secrets: real values never go in Git (sample files are the templates)
+.env
+*.env
+!sample.env
+!*.sample.env

@@ -1,0 +1,48 @@
+# Local development stack. Run from this folder (db/), so compose reads ./.env:
+#   docker compose up -d postgres            # just the database (for `cargo run`)
+#   docker compose --profile app up --build  # database + the service container
+#   docker compose --profile tools up -d     # pgAdmin on http://localhost:5050
+
+services:
+  postgres:
+    image: postgres:17 # same major version as RDS
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-diesel_demo}
+    volumes:
+      - postgresData:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    profiles: ["app"]
+    build: ..
+    container_name: api
+    ports:
+      - "8000:8000"
+    environment:
+      ENV: docker
+      LOG_FORMAT: json
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-diesel_demo}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  pgAdmin:
+    profiles: ["tools"]
+    image: dpage/pgadmin4
+    container_name: pgAdmin
+    ports:
+      - "5050:80"
+    env_file:
+      - ./.env
+
+volumes:
+  postgresData:
