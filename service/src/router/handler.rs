@@ -3,12 +3,12 @@ use hyper::Method;
 use hyper::{body::Bytes, Response};
 use hyper::{body::Incoming as IncomingBody, Request};
 
-use crate::router::utils::{error, handle_error, success};
+use crate::router::utils::{error, from_body, handle_error, success};
 
 pub async fn handler(
     req: Request<IncomingBody>,
 ) -> Result<Response<Full<Bytes>>, service::shared::types::RouteError> {
-    let (p, _body) = req.into_parts();
+    let (p, body) = req.into_parts();
     let start = std::time::Instant::now();
     let response = match (&p.method, p.uri.path()) {
         // probes: Kubernetes liveness and readiness
@@ -17,6 +17,17 @@ pub async fn handler(
             Ok(ready) => success(ready),
             Err(e) => handle_error(e),
         },
+
+        // users
+        (&Method::POST, "/v1/users") => {
+            match from_body(Request::from_parts(p.clone(), body)).await {
+                Ok(req) => match service::handlers::users::create(req).await {
+                    Ok(user) => success(user),
+                    Err(e) => handle_error(e),
+                },
+                Err(e) => handle_error(e),
+            }
+        }
 
         // Handle CORS preflight request
         (&hyper::Method::OPTIONS, _) => {
