@@ -14,6 +14,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  # "Run workflow" button in the Actions tab, e.g. to fill an empty ECR after a fresh
+  # terraform apply. Run it on main (the AWS role only trusts the main branch).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -46,7 +49,7 @@ jobs:
 
   publish:
     needs: ci
-    if: github.event_name == 'push' && vars.AWS_ROLE_ARN != ''
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_ROLE_ARN != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
